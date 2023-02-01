@@ -1,0 +1,47 @@
+USE [Shoe Project]
+GO
+
+--Table Overview
+SELECT * FROM SalesData
+
+--Search for duplicates
+SELECT DISTINCT * FROM SalesData
+
+--Search for duplicates via CASE
+SELECT InvoiceNo,
+  CASE
+    WHEN ROW_NUMBER () OVER (PARTITION BY
+    InvoiceNo, SaleDate, Country, ProductID, Shop, Gender, SizeUS, UnitPrice, Discount, SalePrice
+    ORDER BY InvoiceNo) > 1 THEN '0'
+    ELSE '1'
+    END AS Duplicates
+FROM SalesData
+ORDER BY Duplicates ASC
+
+--Search for duplicates via CTE
+WITH
+FindingDuplicates AS (
+  SELECT *, ROW_NUMBER () OVER (PARTITION BY
+    InvoiceNo, SaleDate, Country, ProductID, Shop, Gender, SizeUS, UnitPrice, Discount, SalePrice
+    ORDER BY InvoiceNo) AS Occurence
+  FROM 
+    SalesData
+ )
+SELECT * FROM FindingDuplicates
+WHERE Occurence > 1
+
+--Deleting Duplicate Rows with ROW_NUMBER
+WITH todelete AS (
+  SELECT *,
+    ROW_NUMBER () OVER (
+      PARTITION BY
+        InvoiceNo,SizeUS,SalePrice
+      ORDER BY
+        InvoiceNo,SizeUS,SalePrice
+      ) AS rownum
+  FROM
+    SalesData
+ )
+ DELETE FROM todelete
+ WHERE rownum > 1
+ 
